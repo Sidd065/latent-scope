@@ -20,7 +20,7 @@ latentscope/           # Python package
   __version__.py
   models/              # Embedding + chat model providers
     __init__.py        # get_embedding_model(), get_chat_model()
-    providers/         # openai, gemini, transformers, cohere, voyage, etc.
+    providers/         # openai, gemini, cohere, voyage, etc.
     embedding_models.json
     chat_models.json
   scripts/             # Pipeline step implementations
@@ -52,8 +52,8 @@ DEVELOPMENT.md         # Developer setup guide
 ### App Factory Pattern
 `latentscope/server/app.py` uses `create_app(data_dir, read_only)`. The data directory is stored in `app.config['DATA_DIR']` — **not** in module-level globals. All blueprints read it via `current_app.config['DATA_DIR']`. This makes the server testable and embeddable.
 
-### Lazy Imports in `__init__.py`
-Heavy ML dependencies (torch, transformers, umap-learn, hdbscan) are only imported when their functions are actually called. This allows `import latentscope` (e.g. to start the server or use config utilities) without requiring the full ML stack.
+### Lazy Imports in Pipeline Scripts
+Scientific pipeline dependencies such as `umap-learn` and `hdbscan` are imported in the scripts that need them. Model inference is API-only, so the package should not depend on local inference stacks.
 
 ### Job Runner Security
 `latentscope/server/jobs.py` runs CLI subprocesses. **Always use list-based commands, never `shell=True`.** Command arguments include user-supplied values (dataset names, file paths) that are vulnerable to shell injection when passed to a shell. Example:
@@ -103,7 +103,7 @@ Config is in `pyproject.toml`. Line length 100, rules: E/W/F/I/UP.
 
 - **Embedding models:** Add entry to `latentscope/models/embedding_models.json`, add provider class in `latentscope/models/providers/` if new provider.
 - **Chat models:** Add entry to `latentscope/models/chat_models.json`.
-- Model IDs must not contain emoji (use provider prefix strings like `huggingface`, `openai`, etc.). HuggingFace model IDs use `transformers-` prefix with `___` replacing `/`.
+- Model IDs must not contain emoji. Use provider prefix strings like `openai`, `gemini`, `mistralai`, `cohereai`, `togetherai`, and `voyageai`.
 
 ---
 
@@ -113,7 +113,7 @@ See `development-plan.md` for the full plan. Current branch (`claude/modernize-b
 
 - ✅ App factory pattern + blueprint dependency injection (Stream 2.6)
 - ✅ Shell injection fix in jobs.py — list-based commands, no shell=True (Stream 2.2)
-- ✅ HuggingFace emoji bug fix (#97) (Stream 2.7)
+- ✅ Legacy emoji model ID bug fix (#97) (Stream 2.7)
 - ✅ Lazy imports in `__init__.py` (Stream 2.1 partial)
 - ✅ Foundational test infrastructure: 40 tests passing (Stream 1.1, 1.4 partial)
 - ✅ ruff configuration in pyproject.toml (Stream 2.1)

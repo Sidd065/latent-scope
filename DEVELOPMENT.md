@@ -120,7 +120,7 @@ The code to run models or call APIs is centralized here. The idea is to provide 
 
 ### Embedding models
 Embedding models are prepared in [latentscope/models/embedding_models.json](latentscope/models/embedding_models.json).
-There is a `get_embedding_model(id)` function which will load the appropriate class based on the model provider. See `providers/` for `transformers`, `openai`, `gemini`, `cohereai`, `togetherai`, `voyageai`
+There is a `get_embedding_model(id)` function which will load the appropriate class based on the model provider. See `providers/` for `openai`, `gemini`, `mistralai`, `cohereai`, `togetherai`, `voyageai`
 
 ### Chat models
 Chat models for summarization of clusters are prepared in [latentscope/models/chat_models.json](latentscope/models/chat_models.json). 

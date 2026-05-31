@@ -4,15 +4,13 @@ import { groups } from 'd3-array';
 
 import { useStartJobPolling } from '../Job/Run';
 import { apiService, apiUrl } from '../../lib/apiService';
-import { debounce } from '../../utils';
 import { useSetup } from '../../contexts/SetupContext';
-import { Button, Modal } from 'react-element-forge';
+import { Button } from 'react-element-forge';
 import { Tooltip } from 'react-tooltip';
 
 import ModelSelect from '../ModelSelect';
 import JobProgress from '../Job/Progress';
 import DataTable from '../DataTable';
-import Settings from '../../pages/Settings';
 import SettingsModal from '../SettingsModal';
 import styles from './ClusterLabels.module.scss';
 
@@ -84,17 +82,6 @@ function ClusterLabels() {
     }
   }, [dataset]);
 
-  const [HFModels, setHFModels] = useState([]);
-  const searchHFModels = useCallback((query) => {
-    debounce(
-      apiService.searchHFChatModels(query).then((hfm) => {
-        console.log('hf chat models', hfm);
-        setHFModels(hfm);
-      }),
-      300
-    );
-  }, []);
-
   const [presetModels, setPresetModels] = useState([]);
   useEffect(() => {
     apiService
@@ -122,19 +109,9 @@ function ClusterLabels() {
     });
   }, []);
 
-  const [ollamaModels, setOllamaModels] = useState([]);
-  const fetchOllamaModels = useCallback(() => {
-    apiService.fetchOllamaChatModels().then((data) => {
-      console.log('ollama chat models', data);
-      if (data && data.length) setOllamaModels(data);
-    });
-  }, [setOllamaModels]);
-
   useEffect(() => {
     fetchRecentModels();
-    searchHFModels();
-    fetchOllamaModels();
-  }, [fetchRecentModels, searchHFModels, fetchOllamaModels]);
+  }, [fetchRecentModels]);
 
   // Build up the list of options for the Dropdown
   const [allModels, setAllModels] = useState([]);
@@ -144,8 +121,6 @@ function ClusterLabels() {
     const am = [presetModels[0]]
       .concat(recentModels)
       .concat(customModels)
-      .concat(ollamaModels)
-      .concat(HFModels)
       .concat(presetModels.slice(1))
       .filter((d) => !!d);
     let allOptions = am
@@ -165,13 +140,12 @@ function ClusterLabels() {
     setAllOptionsGrouped(grouped);
     setAllModels(am);
 
-    // we don't set a default option, so it's a more explicit choice of model
-    const defaultOption = allOptions.find((option) => option.id == 'nltk-top-words');
+    const defaultOption = allOptions[0];
     if (defaultOption && !defaultModel) {
       setDefaultModel(defaultOption);
-      setChatModel(defaultOption.id);
+      setChatModel(defaultOption);
     }
-  }, [presetModels, HFModels, recentModels, defaultModel, customModels, ollamaModels]);
+  }, [presetModels, recentModels, defaultModel, customModels]);
 
   useEffect(() => {
     setChatModel(defaultModel);
@@ -313,8 +287,7 @@ function ClusterLabels() {
         <div className={styles['cluster-labels-form']}>
           <p>
             Automatically create labels for each cluster
-            {cluster ? ` in ${cluster.id}` : ''} using a chat model. For quickest CPU based results
-            use nltk top-words.
+            {cluster ? ` in ${cluster.id}` : ''} using an API chat model.
           </p>
           <form>
             <label>
@@ -323,7 +296,6 @@ function ClusterLabels() {
                 options={allOptionsGrouped}
                 defaultValue={defaultModel}
                 onChange={handleModelSelectChange}
-                onInputChange={searchHFModels}
               />
             </label>
             <label>

@@ -188,9 +188,6 @@ function Scope() {
         label: data.get('label'),
         description: data.get('description'),
       };
-      if (scope.sae_id) {
-        payload.sae_id = scope.sae_id;
-      }
 
       console.log('action', action);
       if (action == 'save') {
@@ -228,8 +225,7 @@ function Scope() {
         scope.embedding_id != savedScope?.embedding_id ||
         scope.umap_id != savedScope?.umap_id ||
         scope.cluster_id != savedScope?.cluster_id ||
-        scope.cluster_labels_id != savedScope?.cluster_labels_id ||
-        scope.sae_id != savedScope?.sae_id
+        scope.cluster_labels_id != savedScope?.cluster_labels_id
       ) {
         setIsDifferent(true);
       } else {
@@ -311,13 +307,6 @@ function Scope() {
               </span>
               <br />
             </span>
-            {scope?.sae_id ? (
-              <span className={savedScope?.sae_id !== scope?.sae_id ? styles['different'] : ''}>
-                <span className={styles['scope-form-label']}>SAE: </span>
-                <span className={styles['scope-form-value']}>{scope?.sae_id}</span>
-                <br />
-              </span>
-            ) : null}
             <span className={savedScope?.umap_id !== umap?.id ? styles['different'] : ''}>
               <span className={styles['scope-form-label']}>Umap: </span>
               <span className={styles['scope-form-value']}>{umap?.id}</span>

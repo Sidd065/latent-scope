@@ -10,11 +10,8 @@ import JobProgress from '../Job/Progress';
 import { useStartJobPolling } from '../Job/Run';
 import { useSetup } from '../../contexts/SetupContext';
 import { apiService, apiUrl } from '../../lib/apiService';
-import { saeAvailable } from '../../lib/SAE';
-import { debounce } from '../../utils';
 import SettingsModal from '../SettingsModal';
 
-import Sae from './Sae';
 import Preview from './Preview';
 import EstimatePanel from './EstimatePanel';
 
@@ -37,7 +34,6 @@ function Embedding() {
   const [embeddings, setEmbeddings] = useState([]);
   const [umaps, setUmaps] = useState([]);
   const [clusters, setClusters] = useState([]);
-  const [sae, setSae] = useState(null);
 
   const [embeddingFormats, setEmbeddingFormats] = useState({});
   const [migratingId, setMigratingId] = useState(null);
@@ -107,16 +103,6 @@ function Embedding() {
     }
   }, [dataset, setEmbeddings, setUmaps, setClusters]);
 
-  const [HFModels, setHFModels] = useState([]);
-  const searchHFModels = useCallback((query) => {
-    debounce(
-      apiService.searchHFSTModels(query).then((hfm) => {
-        setHFModels(hfm);
-      }),
-      300
-    );
-  }, []);
-
   const [presetModels, setPresetModels] = useState([]);
   useEffect(() => {
     apiService
@@ -153,8 +139,7 @@ function Embedding() {
 
   useEffect(() => {
     fetchRecentModels();
-    searchHFModels();
-  }, [fetchRecentModels, searchHFModels]);
+  }, [fetchRecentModels]);
 
   // Build up the list of options for the Dropdown
   /*
@@ -167,9 +152,7 @@ function Embedding() {
 
     models come from several sources:
     - recently used
-    - top models from HF
-      - search models from HF
-    - 3rd party models
+    - built-in API providers
     - custom embedding models (OpenAI-compatible APIs)
 
   */
@@ -179,7 +162,6 @@ function Embedding() {
   useEffect(() => {
     const am = customEmbeddingModels
       .concat(recentModels)
-      .concat(HFModels)
       .concat(presetModels)
       .filter((d) => !!d);
     let allOptions = am
@@ -205,7 +187,7 @@ function Embedding() {
     //   setDefaultModel(defaultOption);
     //   setModelId(defaultOption.id);
     // }
-  }, [presetModels, HFModels, recentModels, customEmbeddingModels, defaultModel]);
+  }, [presetModels, recentModels, customEmbeddingModels, defaultModel]);
 
   useEffect(() => {
     if (embeddingsJob?.status === 'completed') {
@@ -382,20 +364,12 @@ function Embedding() {
     [startEmbeddingsTruncateJob]
   );
 
-  const handleSAE = useCallback(
-    (sae) => {
-      setSae(sae);
-    },
-    [setSae]
-  );
-
   const handleNextStep = useCallback(() => {
     if (savedScope?.embedding_id == embedding?.id) {
-      updateScope({ ...savedScope, sae_id: sae?.id });
+      updateScope({ ...savedScope });
     } else {
       updateScope({
         embedding_id: embedding?.id,
-        sae_id: sae?.id,
         umap_id: null,
         cluster_id: null,
         cluster_labels_id: null,
@@ -403,7 +377,7 @@ function Embedding() {
       });
     }
     goToNextStep();
-  }, [updateScope, goToNextStep, embedding, savedScope, sae]);
+  }, [updateScope, goToNextStep, embedding, savedScope]);
 
   const isComplete = embeddingsJob && embeddingsJob.status === 'completed';
 
@@ -484,7 +458,6 @@ function Embedding() {
               options={allOptionsGrouped}
               defaultValue={defaultModel}
               onChange={handleModelSelectChange}
-              onInputChange={searchHFModels}
             />
           </div>
           <SettingsModal
@@ -696,10 +669,6 @@ function Embedding() {
                     ) : (
                       <br />
                     )}
-
-                    {saeAvailable[emb.model_id] ? (
-                      <Sae embedding={emb} model={saeAvailable[emb.model_id]} onSAE={handleSAE} />
-                    ) : null}
                   </span>
                 </label>
                 {embedding?.id == emb.id ? (

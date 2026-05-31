@@ -1,18 +1,18 @@
-import os
 import time
-from .base import EmbedModelProvider,ChatModelProvider
+import os
+
+from .base import ChatModelProvider, EmbedModelProvider
 
 from latentscope.util import get_key
 
-# TODO verify these tokenizers somehow
-# derived from:
-  # https://docs.mistral.ai/platform/endpoints/
-  # https://huggingface.co/docs/transformers/main/en/model_doc/mixtral
-encoders = {
-    "mistral-tiny": "mistralai/Mistral-7B-v0.1",
-    "mistral-small": "mistralai/Mixtral-8x7B-v0.1",
-    "mistral-medium": "mistralai/Mixtral-8x7B-v0.1", #just guessing
-}
+
+class ApproxTextEncoder:
+    def encode(self, text):
+        text = "" if text is None else str(text)
+        return [text[i:i + 4] for i in range(0, len(text), 4)]
+
+    def decode(self, tokens):
+        return "".join(tokens)
 
 class MistralAIEmbedProvider(EmbedModelProvider):
     def load_model(self):
@@ -31,7 +31,6 @@ class MistralAIEmbedProvider(EmbedModelProvider):
 class MistralAIChatProvider(ChatModelProvider):
     def load_model(self):
         from mistralai.client import MistralClient
-        from transformers import AutoTokenizer
         from mistralai.models.chat_completion import ChatMessage
         self.ChatMessage = ChatMessage
         api_key = get_key("MISTRAL_API_KEY")
@@ -39,7 +38,7 @@ class MistralAIChatProvider(ChatModelProvider):
             print("ERROR: No API key found for Mistral")
             print("Missing 'MISTRAL_API_KEY' variable in:", f"{os.getcwd()}/.env")
         self.client = MistralClient(api_key=api_key)
-        self.encoder = AutoTokenizer.from_pretrained(encoders[self.name])
+        self.encoder = ApproxTextEncoder()
 
     def chat(self, messages):
         instances = [self.ChatMessage(content=message["content"], role=message["role"]) for message in messages]

@@ -22,10 +22,19 @@ class TestEmbeddingModelList:
         assert len(ids) == len(set(ids)), "Duplicate model IDs found"
 
     def test_no_emoji_in_ids(self):
-        """Model IDs should not contain the HuggingFace emoji (issue #97)."""
+        """Model IDs should not contain emoji."""
         from latentscope.models import get_embedding_model_list
         for model in get_embedding_model_list():
             assert '🤗' not in model['id'], f"Emoji found in model id: {model['id']}"
+
+    def test_no_local_embedding_providers(self):
+        from latentscope.models import get_embedding_model_list
+
+        local_providers = {"colbert", "colpali", "huggingface", "transformers", "🤗"}
+        local_prefixes = ("colbert-", "colpali-", "huggingface-", "transformers-", "🤗-")
+        for model in get_embedding_model_list():
+            assert model["provider"] not in local_providers
+            assert not model["id"].startswith(local_prefixes)
 
 
 class TestChatModelList:
@@ -41,6 +50,15 @@ class TestChatModelList:
             assert 'id' in model
             assert 'provider' in model
             assert 'name' in model
+
+    def test_no_local_chat_providers(self):
+        from latentscope.models import get_chat_model_list
+
+        local_providers = {"nltk", "ollama", "huggingface", "transformers", "🤗"}
+        local_prefixes = ("nltk-", "ollama-", "huggingface-", "transformers-", "🤗-")
+        for model in get_chat_model_list():
+            assert model["provider"] not in local_providers
+            assert not model["id"].startswith(local_prefixes)
 
 
 class TestGeminiProviderResolution:
@@ -71,22 +89,3 @@ class TestGetEmbeddingModelDict:
         with pytest.raises(ValueError, match="not found"):
             get_embedding_model_dict("nonexistent-model-xyz")
 
-
-class TestHuggingFaceIdParsing:
-    """Verify that both the new 'huggingface-' prefix and legacy '🤗-' prefix work."""
-
-    def test_parse_huggingface_prefix(self):
-        from latentscope.models import _parse_hf_model_id
-        assert _parse_hf_model_id("huggingface-BAAI___bge-small-en-v1.5") == "BAAI/bge-small-en-v1.5"
-
-    def test_parse_emoji_prefix(self):
-        from latentscope.models import _parse_hf_model_id
-        assert _parse_hf_model_id("🤗-BAAI___bge-small-en-v1.5") == "BAAI/bge-small-en-v1.5"
-
-    def test_parse_transformers_prefix(self):
-        from latentscope.models import _parse_hf_model_id
-        assert _parse_hf_model_id("transformers-BAAI___bge-small-en-v1.5") == "BAAI/bge-small-en-v1.5"
-
-    def test_returns_none_for_non_hf_id(self):
-        from latentscope.models import _parse_hf_model_id
-        assert _parse_hf_model_id("openai-text-embedding-3-small") is None

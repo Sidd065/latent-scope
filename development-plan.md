@@ -43,7 +43,7 @@ The plan is organized into **independent work streams** that can be executed in 
 | # | Title | Notes |
 |---|-------|-------|
 | 95 | Sliders not working on Explore page | Frontend bug |
-| 97 | HuggingFace emoji in model names causes UnicodeEncodeError | Windows charset issue |
+| 97 | Legacy emoji model names cause UnicodeEncodeError | Windows charset issue |
 | 89 | Job run time consumption error (timezone bug) | Server/browser timezone mismatch in Progress.jsx |
 
 ### Embedding Models & Providers
@@ -53,7 +53,7 @@ The plan is organized into **independent work streams** that can be executed in 
 | 87 | Support image embeddings in Setup | First-class image embedding support |
 | 68 | Support Model2Vec | Fast distilled embeddings |
 | 67 | Support cde-small-v1 | Context-aware embedding model |
-| 64 | Support token-level embeddings (ColBERT) | Multi-vector approach |
+| 64 | Support token-level embeddings through APIs | Multi-vector approach |
 | 51 | Add GloVe/word2vec embedding option | Classic word embeddings |
 
 ### Dimensionality Reduction & Projection
@@ -134,7 +134,7 @@ The plan is organized into **independent work streams** that can be executed in 
 #### 1.2 Pipeline Integration Tests
 Test each stage end-to-end with real (small) data:
 - `test_ingest.py` — CSV/JSON/Parquet ingestion, column detection, metadata generation
-- `test_embed.py` — Embedding with a small local model (sentence-transformers)
+- `test_embed.py` — Embedding with a mocked API provider
 - `test_umap.py` — UMAP projection, output format verification
 - `test_cluster.py` — HDBSCAN clustering, output format verification
 - `test_label.py` — Cluster labeling (mock the LLM API call)
@@ -200,11 +200,11 @@ Deduplicate code that exists in multiple places:
 - ✅ Unified `set_api_key(key_name, value)` with validation; per-provider helpers wrap it
 - ✅ Application factory pattern: DATA_DIR in `app.config`, not module-level globals
 - ✅ Centralized `load_dotenv` in configuration.py (no repeated calls across modules)
-- Remaining: Make hardcoded values configurable (Ollama URL, search result batch sizes); JSON metadata schema validation
+- Remaining: Make hardcoded values configurable (search result batch sizes); JSON metadata schema validation
 
 #### 2.7 Code Cleanup ✅ PARTIALLY DONE
 - ✅ Docstrings added to public API (`__init__.py`, `models/__init__.py`, `configuration.py`)
-- ✅ HuggingFace emoji bug (#97) fixed: provider key changed from '🤗' to 'huggingface', backward compat preserved
+- ✅ Legacy emoji model ID bug (#97) fixed
 - ✅ App factory pattern: all 7 blueprints use dependency injection via `current_app.config`
 - Remaining: Resolve 15+ TODO/FIXME comments; remove remaining dead code paths
 
@@ -260,7 +260,7 @@ Deduplicate code that exists in multiple places:
   ```python
   config = {
       "text_column": "text",
-      "embedding_model": "transformers-BAAI___bge-small-en-v1.5",
+      "embedding_model": "openai-text-embedding-3-small",
       "umap": {"n_neighbors": 25, "min_dist": 0.1},
       "cluster": {"min_samples": 5},
       "label_model": "openai-gpt-4o-mini",

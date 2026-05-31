@@ -350,7 +350,6 @@ def run_umap():
     data_dir = _data_dir()
     dataset = request.args.get('dataset')
     embedding_id = request.args.get('embedding_id')
-    sae_id = request.args.get('sae_id')
     neighbors = request.args.get('neighbors')
     min_dist = request.args.get('min_dist')
     init = request.args.get('init')
@@ -371,8 +370,6 @@ def run_umap():
         command.append(f'--align={align}')
     if save:
         command.append('--save')
-    if sae_id:
-        command.append(f'--sae_id={sae_id}')
     if seed:
         command.append(f'--seed={seed}')
     threading.Thread(target=run_job, args=(data_dir, dataset, job_id, command)).start()
@@ -408,25 +405,6 @@ def _delete_umap(data_dir, dataset, umap_id):
 
     job_id = str(uuid.uuid4())
     _write_completed_job(data_dir, dataset, job_id, f"delete umap {umap_id}")
-    return jsonify({"job_id": job_id})
-
-
-@jobs_write_bp.route('/sae')
-def run_sae():
-    data_dir = _data_dir()
-    dataset = request.args.get('dataset')
-    embedding_id = request.args.get('embedding_id')
-    model_id = request.args.get('model_id')
-    k_expansion = request.args.get('k_expansion')
-
-    err = _require_params(dataset=dataset, embedding_id=embedding_id,
-                          model_id=model_id, k_expansion=k_expansion)
-    if err:
-        return err
-
-    job_id = str(uuid.uuid4())
-    command = ['ls-sae', dataset, embedding_id, model_id, k_expansion]
-    threading.Thread(target=run_job, args=(data_dir, dataset, job_id, command)).start()
     return jsonify({"job_id": job_id})
 
 
@@ -548,7 +526,6 @@ def run_scope():
     data_dir = _data_dir()
     dataset = request.args.get('dataset')
     embedding_id = request.args.get('embedding_id')
-    sae_id = request.args.get('sae_id')
     umap_id = request.args.get('umap_id')
     cluster_id = request.args.get('cluster_id')
     cluster_labels_id = request.args.get('cluster_labels_id')
@@ -566,8 +543,6 @@ def run_scope():
     job_id = str(uuid.uuid4())
     command = ['ls-scope', dataset, embedding_id, umap_id, cluster_id,
                cluster_labels_id, label, description]
-    if sae_id:
-        command.append(f'--sae_id={sae_id}')
     if scope_id:
         command.append(f'--scope_id={scope_id}')
     threading.Thread(target=run_job, args=(data_dir, dataset, job_id, command)).start()

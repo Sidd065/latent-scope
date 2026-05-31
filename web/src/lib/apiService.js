@@ -87,53 +87,6 @@ export const apiService = {
   getRecentChatModels: async () => {
     return fetch(`${apiUrl}/models/chat_models/recent`).then((response) => response.json());
   },
-  searchHFSTModels: async (query) => {
-    let limit = query ? 5 : 5; // TODO: could change this
-    let url = `https://huggingface.co/api/models?filter=sentence-transformers&sort=downloads&limit=${limit}&full=false&config=false`;
-    if (query) {
-      url += `&search=${query}`;
-    }
-    return fetch(url)
-      .then((response) => response.json())
-      .then((data) => {
-        // convert the HF data format to ours
-        const hfm = data.map((d) => {
-          return {
-            id: '🤗-' + d.id.replace('/', '___'),
-            name: d.id,
-            provider: '🤗',
-            downloads: d.downloads,
-            params: {},
-          };
-        });
-        return hfm;
-      });
-  },
-  searchHFChatModels: async (query) => {
-    let limit = 100; //query ? 5 : 5; // TODO: could change this
-    let url = `https://huggingface.co/api/models?pipeline_tag=text-generation&library=transformers,safetensors&other=conversational&sort=downloads&limit=${limit}&full=false&config=false`;
-    if (query) {
-      url += `&search=${query}`;
-    }
-    return fetch(url)
-      .then((response) => response.json())
-      .then((data) => {
-        // convert the HF data format to ours
-        const hfm = data
-          .filter((d) => d.tags.includes('conversational') && !d.tags.includes('gguf'))
-          .map((d) => {
-            return {
-              id: '🤗-' + d.id.replace('/', '___'),
-              name: d.id,
-              provider: '🤗',
-              downloads: d.downloads,
-              params: {},
-            };
-          })
-          .slice(0, 5); // TODO: figure out why the "conversational" filter in url isn't working
-        return hfm;
-      });
-  },
   searchHFDatasets: async (query) => {
     let limit = query ? 5 : 10; // TODO: could change this
     let url = `https://huggingface.co/api/datasets?filter=latent-scope&sort=downloads&limit=${limit}&full=false&config=false`;
@@ -154,24 +107,6 @@ export const apiService = {
             params: {},
           };
         });
-      });
-  },
-  fetchOllamaChatModels: async () => {
-    return fetch(`http://localhost:11434/api/tags`)
-      .then((response) => response.json())
-      .then((data) => {
-        return data?.models?.map((d) => {
-          return {
-            id: 'ollama-' + d.name,
-            name: d.name,
-            provider: 'ollama',
-            params: {},
-          };
-        });
-      })
-      .catch((error) => {
-        console.error('Error fetching Ollama chat models', error);
-        // throw error;
       });
   },
   searchNearestNeighbors: async (datasetId, embedding, query, scope = null) => {

@@ -8,10 +8,6 @@ vi.mock('hyparquet', () => ({
   parquetRead: vi.fn(),
 }));
 
-vi.mock('../lib/SAE', () => ({
-  saeAvailable: {},
-}));
-
 vi.stubEnv('VITE_API_URL', 'http://localhost:5001/api');
 
 const mockScope = {

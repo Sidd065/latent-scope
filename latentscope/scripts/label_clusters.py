@@ -40,7 +40,12 @@ def main():
     parser.add_argument('dataset_id', type=str, help='Dataset ID (directory name in data/)')
     parser.add_argument('text_column', type=str, help='Output file', default='text')
     parser.add_argument('cluster_id', type=str, help='ID of cluster set', default='cluster-001')
-    parser.add_argument('model_id', type=str, help='ID of model to use', default="openai-gpt-3.5-turbo")
+    parser.add_argument(
+        'model_id',
+        type=str,
+        help='ID of model to use',
+        default="gemini-gemini-2.5-flash",
+    )
     parser.add_argument('samples', type=int, help='Number to sample from each cluster (default: 0 for all)', default=0)
     parser.add_argument('context', type=str, help='Additional context for labeling model', default="")
     parser.add_argument('--rerun', type=str, help='Rerun the given embedding from last completed batch')
@@ -53,7 +58,7 @@ def main():
     labeler(args.dataset_id, args.text_column, args.cluster_id, args.model_id, args.samples, args.context, args.rerun, args.max_tokens_per_sample, args.max_tokens_total)
 
 
-def labeler(dataset_id, text_column="text", cluster_id="cluster-001", model_id="openai-gpt-3.5-turbo", samples=0, context="", rerun="", max_tokens_per_sample=-1, max_tokens_total=-1):
+def labeler(dataset_id, text_column="text", cluster_id="cluster-001", model_id="gemini-gemini-2.5-flash", samples=0, context="", rerun="", max_tokens_per_sample=-1, max_tokens_total=-1):
     import numpy as np
     import pandas as pd
     DATA_DIR = get_data_dir()
@@ -108,7 +113,7 @@ def labeler(dataset_id, text_column="text", cluster_id="cluster-001", model_id="
 
     tqdm.write(f"RUNNING: {label_id}")
 
-    tqdm.write(f"Loading model {model_id} (may take a while if first time downloading from HF)")
+    tqdm.write(f"Loading API model {model_id}")
     model = get_chat_model(model_id)
     model.load_model()
     enc = model.encoder

@@ -8,7 +8,7 @@ This file documents breaking changes to data formats and how to migrate between 
 
 ### v1.1 — LanceDB Embedding Storage (April 2026)
 
-**Change:** Embedding vectors are now stored in LanceDB tables (Lance format v2.2) instead of HDF5 files. This provides ~50% storage reduction via automatic BSS + LZ4 compression, native vector search, and support for late interaction models (ColBERT/ColPali per-token vectors).
+**Change:** Embedding vectors are now stored in LanceDB tables (Lance format v2.2) instead of HDF5 files. This provides ~50% storage reduction via automatic BSS + LZ4 compression and native vector search.
 
 **Old format:**
 ```
@@ -29,8 +29,7 @@ This file documents breaking changes to data formats and how to migrate between 
 
 **When to migrate:**
 - Migration is optional for existing datasets
-- Recommended for storage savings and to enable late interaction search
-- Required if you want to use ColBERT/ColPali models on existing datasets
+- Recommended for storage savings and faster vector search
 
 **How to migrate:**
 - **UI:** On the Embedding setup step, embeddings stored in HDF5 show an "HDF5" badge. Click "Migrate to LanceDB" to convert.

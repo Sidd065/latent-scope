@@ -3,7 +3,7 @@
 [![](https://dcbadge.vercel.app/api/server/x7NvpnM4pY?style=flat)](https://discord.gg/x7NvpnM4pY)
 [![PyPI version](https://img.shields.io/pypi/v/latentscope.svg)](https://pypi.org/project/latentscope/)
 
-Quickly embed, project, cluster and explore a dataset with open models locally or via API. This project is a new kind of workflow + tool for visualizing and exploring datasets through the lens of latent spaces.
+Quickly embed, project, cluster and explore a dataset with API-hosted embedding and chat models. This project is a new kind of workflow + tool for visualizing and exploring datasets through the lens of latent spaces.
 
 [Docs](https://enjalot.github.io/latent-scope/) · [Demos](https://latent.estate)
 
@@ -92,22 +92,22 @@ ls-ingest-csv "datavis-misunderstood" "~/Downloads/datavis-misunderstood.csv"
 # get a list of model ids available (lists both embedding and chat models available)
 ls-list-models
 # ls-embed dataset_id text_column model_id prefix
-ls-embed datavis-misunderstood "answer" transformers-intfloat___e5-small-v2 ""
+ls-embed datavis-misunderstood "answer" gemini-gemini-embedding-001 ""
 # ls-umap dataset_id embedding_id n_neighbors min_dist
 ls-umap datavis-misunderstood embedding-001 25 .1
 # ls-cluster dataset_id umap_id samples min_samples
 ls-cluster datavis-misunderstood umap-001 5 5
 # ls-label dataset_id text_column cluster_id model_id context
-ls-label datavis-misunderstood "answer" cluster-001 transformers-HuggingFaceH4___zephyr-7b-beta ""
+ls-label datavis-misunderstood "answer" cluster-001 gemini-gemini-2.5-flash ""
 # ls-scope  dataset_id embedding_id umap_id cluster_id cluster_labels_id label description
-ls-scope datavis-misunderstood cluster-001-labels-001 "E5 demo" "E5 embeddings summarized by Zephyr 7B"
+ls-scope datavis-misunderstood embedding-001 umap-001 cluster-001 cluster-001-labels-001 "API demo" "Gemini embeddings summarized by Gemini"
 # start the server to explore your scope
 ls-serve
 ```
 
 ### Repository overview
 
-This repository is currently meant to run locally, with a React frontend that communicates with a python server backend. We support several popular open source embedding models that can run locally as well as proprietary API embedding services. Adding new models and services should be quick and easy.
+This repository is currently meant to run locally, with a React frontend that communicates with a python server backend. Model inference is API-only: embeddings and cluster labels are generated through configured providers such as OpenAI, Gemini, Mistral, Cohere, Together, and Voyage. Adding new API providers and services should be quick and easy.
 
 To learn more about contributing and the project roadmap see [CONTRIBUTION.md](CONTRIBUTION.md), for technical details see [DEVELOPMENT.md](DEVELOPMENT.md).
 
@@ -145,13 +145,13 @@ ls-ingest database-curated
 
 ### 1. embed
 
-Take the text from the input and embed it. Default is to use `BAAI/bge-small-en-v1.5` locally via HuggingFace transformers. API services are supported as well, see [latentscope/models/embedding_models.json](latentscope/models/embedding_models.json) for model ids.
+Take the text from the input and embed it with an API provider. See [latentscope/models/embedding_models.json](latentscope/models/embedding_models.json) for model ids.
 
 ```bash
 # you can get a list of models available with:
 ls-list-models
 # ls-embed <dataset_name> <text_column> <model_id>
-ls-embed dadabase joke transformers-intfloat___e5-small-v2
+ls-embed dadabase joke openai-text-embedding-3-small
 ```
 
 ### 2. umap
@@ -179,7 +179,7 @@ You can pass context that will be injected into the system prompt for your datas
 
 ```bash
 # ls-label <dataset_id> <cluster_id> <chat_model_id> <context>
-ls-label dadabase "joke" cluster-001 openai-gpt-3.5-turbo ""
+ls-label dadabase "joke" cluster-001 gemini-gemini-2.5-flash ""
 ```
 
 ### 5. scope
@@ -188,7 +188,7 @@ The scope command ties together each step of the process to create an explorable
 
 ```bash
 # ls-scope  <dataset_id> <embedding_id> <umap_id> <cluster_id> <cluster_labels_id> <label> <description>
-ls-scope datavis-misunderstood cluster-001-labels-001 "E5 demo" "E5 embeddings summarized by GPT3.5-Turbo"
+ls-scope dadabase embedding-001 umap-001 cluster-001 cluster-001-labels-001 "API demo" "API embeddings summarized by Gemini"
 ```
 
 ### 6. serve

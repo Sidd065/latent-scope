@@ -61,29 +61,24 @@ def estimate_embed():
     models = get_embedding_model_list()
     model_info = next((m for m in models if m['id'] == model_id), None)
 
-    is_late_interaction = False
     if model_info:
         est_dimensions = dimensions or model_info.get('params', {}).get(
             'dimensions', [768]
         )
         if isinstance(est_dimensions, list):
             est_dimensions = est_dimensions[0]
-        is_late_interaction = model_info.get('params', {}).get('late_interaction', False)
         group = model_info.get('group', model_info.get('provider', ''))
     else:
         est_dimensions = dimensions or 768
-        # Check if it's a colbert model by ID prefix
-        is_late_interaction = model_id.startswith('colbert-')
         group = 'unknown'
 
-    # Estimate tokens per doc for late interaction
     avg_tokens_per_doc = min(avg_word_count * 1.3, 512)  # rough token estimate
 
     # Storage estimate
     from latentscope.util.embedding_store import estimate_embedding_storage
     storage = estimate_embedding_storage(
         num_rows, est_dimensions,
-        has_tokens=is_late_interaction,
+        has_tokens=False,
         avg_tokens_per_doc=int(avg_tokens_per_doc),
     )
 
@@ -91,12 +86,8 @@ def estimate_embed():
     if group in ('openai', 'gemini', 'mistralai', 'cohereai', 'voyageai', 'togetherai'):
         # API-based: ~500-2000 items/sec depending on provider
         items_per_sec = 1000
-    elif is_late_interaction:
-        # Late interaction models are slower
-        items_per_sec = 50  # conservative GPU estimate
     else:
-        # Local transformers model
-        items_per_sec = 200  # conservative GPU estimate
+        items_per_sec = 1000
 
     estimated_seconds = num_rows / items_per_sec
 
@@ -106,7 +97,7 @@ def estimate_embed():
         "max_text_length": max_text_length,
         "avg_word_count": avg_word_count,
         "dimensions": est_dimensions,
-        "is_late_interaction": is_late_interaction,
+        "is_late_interaction": False,
         "avg_tokens_per_doc": int(avg_tokens_per_doc),
         "storage": storage,
         "estimated_seconds": round(estimated_seconds, 1),
@@ -235,24 +226,14 @@ def benchmark_embed():
     model = get_embedding_model(model_id)
     model.load_model()
 
-    is_late_interaction = getattr(model, 'late_interaction', False)
-
     # Warm up (1 item)
-    if is_late_interaction:
-        model.embed_multi([texts[0]], dimensions=dimensions)
-    else:
-        model.embed([texts[0]], dimensions=dimensions)
+    model.embed([texts[0]], dimensions=dimensions)
 
     # Benchmark
     start_time = time.time()
-    if is_late_interaction:
-        mean_vecs, token_vecs = model.embed_multi(texts, dimensions=dimensions)
-        sample_dim = mean_vecs.shape[1]
-        avg_tokens = int(np.mean([len(tv) for tv in token_vecs]))
-    else:
-        result = np.array(model.embed(texts, dimensions=dimensions))
-        sample_dim = result.shape[1]
-        avg_tokens = 0
+    result = np.array(model.embed(texts, dimensions=dimensions))
+    sample_dim = result.shape[1]
+    avg_tokens = 0
     elapsed = time.time() - start_time
 
     time_per_item = elapsed / sample_size
@@ -262,7 +243,7 @@ def benchmark_embed():
     from latentscope.util.embedding_store import estimate_embedding_storage
     storage = estimate_embedding_storage(
         num_rows, sample_dim,
-        has_tokens=is_late_interaction,
+        has_tokens=False,
         avg_tokens_per_doc=avg_tokens,
     )
 
@@ -274,7 +255,7 @@ def benchmark_embed():
         "estimated_total_seconds": round(total_estimated_seconds, 1),
         "estimated_total_time_human": _human_readable_time(total_estimated_seconds),
         "dimensions": sample_dim,
-        "is_late_interaction": is_late_interaction,
+        "is_late_interaction": False,
         "avg_tokens_per_doc": avg_tokens,
         "storage": storage,
     })

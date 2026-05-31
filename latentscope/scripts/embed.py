@@ -17,7 +17,7 @@ except ImportError:
     # Fallback to the standard console version if import fails
     from tqdm import tqdm
 
-from latentscope.models import TransformersEmbedProvider, get_embedding_model
+from latentscope.models import get_embedding_model
 from latentscope.util import get_data_dir
 
 
@@ -53,7 +53,12 @@ def main():
     parser = argparse.ArgumentParser(description='Embed a dataset')
     parser.add_argument('dataset_id', type=str, help='Dataset id (directory name in data/)')
     parser.add_argument('text_column', type=str, help='Output file', default='text')
-    parser.add_argument('model_id', type=str, help='ID of embedding model to use', default="transformers-BAAI___bge-small-en-v1.5")
+    parser.add_argument(
+        'model_id',
+        type=str,
+        help='ID of embedding model to use',
+        default="openai-text-embedding-3-small",
+    )
     parser.add_argument('--prefix', type=str, help='Prefix to prepend to text before embedding', default="")
     parser.add_argument('--dimensions', type=int, help='Truncate embeddings to dimensions a la Matroyshka embeddings')
     parser.add_argument('--rerun', type=str, help='Rerun the given embedding from last completed batch')
@@ -119,17 +124,8 @@ def embed(dataset_id, text_column, model_id, prefix, rerun, dimensions, batch_si
     print("loading", model.name)
     model.load_model()
 
-    # Check if this is a late interaction model
-    is_late_interaction = getattr(model, 'late_interaction', False)
-    if is_late_interaction:
-        print("Late interaction model detected - will store per-token vectors")
-
-    if max_seq_length is not None and isinstance(model, TransformersEmbedProvider):
-        # Check if max_seq_length is a setter property
-        try:
-            model.model.max_seq_length = max_seq_length
-        except AttributeError:
-            print("Warning: This model does not support setting max_seq_length. Continuing with default length.")
+    if max_seq_length is not None:
+        print("Max sequence length is handled by the selected API provider when supported.")
 
     print("Checking for empty inputs")
     sentences = df[text_column].tolist()
@@ -155,19 +151,11 @@ def embed(dataset_id, text_column, model_id, prefix, rerun, dimensions, batch_si
             continue
         try:
             start_index = i * batch_size
-            if is_late_interaction:
-                mean_vectors, token_vectors_list = model.embed_multi(batch, dimensions=dimensions)
-                append_embeddings(
-                    DATA_DIR, dataset_id, embedding_id,
-                    mean_vectors, start_index=start_index,
-                    token_vectors_list=token_vectors_list,
-                )
-            else:
-                embeddings = np.array(model.embed(batch, dimensions=dimensions))
-                append_embeddings(
-                    DATA_DIR, dataset_id, embedding_id,
-                    embeddings, start_index=start_index,
-                )
+            embeddings = np.array(model.embed(batch, dimensions=dimensions))
+            append_embeddings(
+                DATA_DIR, dataset_id, embedding_id,
+                embeddings, start_index=start_index,
+            )
         except Exception as e:
             print(batch)
             print("error embedding batch", i, e)
@@ -204,7 +192,7 @@ def embed(dataset_id, text_column, model_id, prefix, rerun, dimensions, batch_si
         "dimensions": stats["dimensions"],
         "max_seq_length": max_seq_length,
         "prefix": prefix,
-        "late_interaction": is_late_interaction,
+        "late_interaction": False,
         "min_values": stats["min_values"],
         "max_values": stats["max_values"],
     }

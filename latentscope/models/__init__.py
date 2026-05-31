@@ -2,37 +2,16 @@ import json
 
 from .providers.cohereai import CohereAIEmbedProvider
 from .providers.gemini import GeminiChatProvider, GeminiEmbedProvider
-from .providers.late_interaction import ColBERTEmbedProvider, ColPaliEmbedProvider
 from .providers.mistralai import MistralAIChatProvider, MistralAIEmbedProvider
-from .providers.nltk import NLTKChatProvider
 from .providers.openai import OpenAIChatProvider, OpenAIEmbedProvider
 from .providers.togetherai import TogetherAIEmbedProvider
-from .providers.transformers import TransformersChatProvider, TransformersEmbedProvider
 from .providers.voyageai import VoyageAIEmbedProvider
 
 # Universal model ID scheme:
 #   <provider>-<model-name>  where "/" in the model name is replaced by "___"
 #
 # Examples:
-#   "nomic-ai/nomic-embed-text-v1.5"  →  "huggingface-nomic-ai___nomic-embed-text-v1.5"
 #   "text-embedding-3-small"          →  "openai-text-embedding-3-small"
-#
-# The legacy prefix "🤗-" is still accepted for backward compatibility.
-
-_HF_PROVIDER = "huggingface"
-_HF_PREFIX = f"{_HF_PROVIDER}-"
-# Legacy emoji prefix kept for backward compat when parsing existing IDs
-_HF_EMOJI_PREFIX = "🤗-"
-# setup.py / transformers provider used the old prefix "transformers-"
-_HF_OLD_PREFIX = "transformers-"
-
-
-def _parse_hf_model_id(model_id):
-    """Return the HuggingFace model name from a model_id, or None if not HF."""
-    for prefix in (_HF_PREFIX, _HF_EMOJI_PREFIX, _HF_OLD_PREFIX):
-        if model_id.startswith(prefix):
-            return model_id[len(prefix):].replace("___", "/")
-    return None
 
 
 def get_embedding_model_list():
@@ -52,25 +31,9 @@ def get_embedding_model_dict(model_id):
     return model
 
 
-def _parse_colbert_model_id(model_id):
-    """Return the model name from a colbert model_id, or None if not colbert."""
-    if model_id.startswith("colbert-"):
-        # Strip the "colbert-" prefix and restore "/" from "___"
-        return model_id[len("colbert-"):].replace("___", "/")
-    return None
-
-
 def get_embedding_model(model_id):
     """Return a ModelProvider instance for the given embedding model id."""
-    # Check for ColBERT/late interaction models first
-    colbert_name = _parse_colbert_model_id(model_id)
-    if colbert_name:
-        return ColBERTEmbedProvider(colbert_name, {"late_interaction": True})
-
-    hf_name = _parse_hf_model_id(model_id)
-    if hf_name:
-        model = {"provider": _HF_PROVIDER, "name": hf_name, "params": {}}
-    elif model_id.startswith("custom_embedding-"):
+    if model_id.startswith("custom_embedding-"):
         import os
 
         from latentscope.util import get_data_dir
@@ -94,9 +57,6 @@ def get_embedding_model(model_id):
         model = get_embedding_model_dict(model_id)
 
     provider = model['provider']
-    # Accept both "huggingface" and legacy "🤗"
-    if provider in (_HF_PROVIDER, "🤗"):
-        return TransformersEmbedProvider(model['name'], model['params'])
     if provider == "openai":
         return OpenAIEmbedProvider(model['name'], model['params'])
     if provider == "gemini":
@@ -111,10 +71,6 @@ def get_embedding_model(model_id):
         return VoyageAIEmbedProvider(model['name'], model['params'])
     if provider == "custom_embedding":
         return OpenAIEmbedProvider(model['name'], model['params'], base_url=model['url'])
-    if provider == "colbert":
-        return ColBERTEmbedProvider(model['name'], model['params'])
-    if provider == "colpali":
-        return ColPaliEmbedProvider(model['name'], model['params'])
     raise ValueError(f"Unknown embedding provider '{provider}' for model '{model_id}'")
 
 
@@ -137,10 +93,7 @@ def get_chat_model_dict(model_id):
 
 def get_chat_model(model_id):
     """Return a ModelProvider instance for the given chat model id."""
-    hf_name = _parse_hf_model_id(model_id)
-    if hf_name:
-        model = {"provider": _HF_PROVIDER, "name": hf_name, "params": {}}
-    elif model_id.startswith("custom-"):
+    if model_id.startswith("custom-"):
         import os
 
         from latentscope.util import get_data_dir
@@ -154,30 +107,16 @@ def get_chat_model(model_id):
                 raise ValueError(f"Custom model '{model_id}' not found in custom_models.json")
         else:
             raise ValueError("No custom_models.json found in data directory")
-    elif model_id.startswith("ollama-"):
-        model = {
-            "provider": "ollama",
-            "name": model_id[len("ollama-"):],
-            "url": "http://localhost:11434/v1",
-            "params": {},
-        }
     else:
         model = get_chat_model_dict(model_id)
 
     provider = model['provider']
-    # Accept both "huggingface" and legacy "🤗"
-    if provider in (_HF_PROVIDER, "🤗"):
-        return TransformersChatProvider(model['name'], model['params'])
     if provider == "openai":
         return OpenAIChatProvider(model['name'], model['params'])
     if provider == "gemini":
         return GeminiChatProvider(model['name'], model['params'])
     if provider == "custom":
         return OpenAIChatProvider(model['name'], model['params'], base_url=model['url'])
-    if provider == "ollama":
-        return OpenAIChatProvider(model['name'], model['params'], base_url=model['url'])
     if provider == "mistralai":
         return MistralAIChatProvider(model['name'], model['params'])
-    if provider == "nltk":
-        return NLTKChatProvider(model['name'], model['params'])
     raise ValueError(f"Unknown chat provider '{provider}' for model '{model_id}'")

@@ -2,7 +2,6 @@ import { createContext, useContext, useState, useEffect, useCallback, useMemo } 
 import { useParams } from 'react-router-dom';
 
 import { apiService } from '../lib/apiService';
-import { saeAvailable } from '../lib/SAE';
 
 const ScopeContext = createContext(null);
 
@@ -12,18 +11,13 @@ export function ScopeProvider({ children }) {
   // Core scope data
   const [scope, setScope] = useState(null);
   const [dataset, setDataset] = useState(null);
-  const [sae, setSae] = useState(null);
 
   const [scopeLoaded, setScopeLoaded] = useState(false);
 
   useEffect(() => {
     apiService.fetchScope(datasetId, scopeId).then((scope) => {
-      if (saeAvailable[scope.embedding?.model_id]) {
-        setSae(scope.sae);
-      } else {
-        delete scope.sae;
-        delete scope.sae_id;
-      }
+      delete scope.sae;
+      delete scope.sae_id;
       setScope(scope);
       setDataset(scope.dataset);
     });
@@ -51,24 +45,6 @@ export function ScopeProvider({ children }) {
   }, [fetchTagSet]);
 
   const tags = useMemo(() => Object.keys(tagset), [tagset]);
-
-  useEffect(() => {
-    if (sae && embeddings && scope) {
-      let embedding = embeddings.find((e) => e.id == scope.embedding_id);
-      if (embedding && saeAvailable[embedding.model_id]) {
-        apiService.getFeatures(saeAvailable[embedding.model_id]?.url).then((fts) => {
-          apiService.getDatasetFeatures(datasetId, sae?.id).then((dsfts) => {
-            dsfts.forEach((ft, i) => {
-              fts[i].dataset_max = ft.max_activation;
-              fts[i].dataset_avg = ft.avg_activation;
-              fts[i].dataset_count = ft.count;
-            });
-            setFeatures(fts);
-          });
-        });
-      }
-    }
-  }, [scope, sae, embeddings]);
 
   const [clusterMap, setClusterMap] = useState({});
   const [clusterIndices, setClusterIndices] = useState([]);
@@ -119,7 +95,7 @@ export function ScopeProvider({ children }) {
     scopeId,
     dataset,
     scope,
-    sae,
+    sae: null,
     scopeLoaded,
     clusterMap,
     clusterLabels,

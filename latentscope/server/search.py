@@ -13,7 +13,7 @@ def _data_dir():
     return current_app.config['DATA_DIR']
 
 
-# in memory cache of dataset metadata, embeddings, models and tokenizers
+# in memory cache of dataset metadata, embeddings, and API model clients
 DATASETS = {}
 DBS = {}
 EMBEDDINGS = {}
@@ -32,7 +32,6 @@ def nn():
     dimensions = request.args.get('dimensions')
     dimensions = int(dimensions) if dimensions else None
     query = request.args.get('query')
-    use_late_interaction = request.args.get('late_interaction', 'false').lower() == 'true'
 
     cache_key = dataset + "-" + embedding_id
     if cache_key not in EMBEDDINGS:
@@ -44,16 +43,6 @@ def nn():
         EMBEDDINGS[cache_key] = model
     else:
         model = EMBEDDINGS[cache_key]
-
-    # Check if late interaction search is requested and supported
-    is_late_interaction = getattr(model, 'late_interaction', False)
-    embedding_meta_path = os.path.join(DATA_DIR, dataset, "embeddings", embedding_id + ".json")
-    with open(embedding_meta_path) as f:
-        emb_meta = json.load(f)
-    has_token_vecs = emb_meta.get('late_interaction', False)
-
-    if use_late_interaction and is_late_interaction and has_token_vecs:
-        return nn_late_interaction(DATA_DIR, dataset, embedding_id, model, query, dimensions)
 
     # If lancedb is available, use it for search (scope-level table)
     if scope_id is not None:
@@ -114,33 +103,6 @@ def nn_lance(data_dir, dataset, scope_id, model, query, dimensions):
     indices = [result["index"] for result in results]
     distances = [result["_distance"] for result in results]
     return jsonify(indices=indices, distances=distances, search_embedding=embedding)
-
-
-def nn_late_interaction(data_dir, dataset, embedding_id, model, query, dimensions):
-    """Late interaction (MaxSim) search using per-token embeddings."""
-    import numpy as np
-
-    from latentscope.util.embedding_store import search_late_interaction
-
-    # Get per-token query embeddings
-    _, query_token_vectors = model.embed_multi([query], dimensions=dimensions)
-    query_tokens = query_token_vectors[0]  # (Q, D)
-
-    # Also get the mean embedding for the response
-    mean_embedding = query_tokens.mean(axis=0)
-    mean_embedding = mean_embedding / (np.linalg.norm(mean_embedding) + 1e-10)
-
-    indices, scores = search_late_interaction(
-        data_dir, dataset, embedding_id,
-        query_tokens, prefilter_limit=200, final_limit=100,
-    )
-
-    return jsonify(
-        indices=indices,
-        distances=scores,
-        search_embedding=mean_embedding.tolist(),
-        search_type="late_interaction",
-    )
 
 
 @search_bp.route('/feature_summary', methods=['POST'])
