@@ -1,6 +1,7 @@
 import json
 
 from .providers.cohereai import CohereAIEmbedProvider
+from .providers.gemini import GeminiChatProvider, GeminiEmbedProvider
 from .providers.late_interaction import ColBERTEmbedProvider, ColPaliEmbedProvider
 from .providers.mistralai import MistralAIChatProvider, MistralAIEmbedProvider
 from .providers.nltk import NLTKChatProvider
@@ -98,6 +99,8 @@ def get_embedding_model(model_id):
         return TransformersEmbedProvider(model['name'], model['params'])
     if provider == "openai":
         return OpenAIEmbedProvider(model['name'], model['params'])
+    if provider == "gemini":
+        return GeminiEmbedProvider(model['name'], model['params'])
     if provider == "mistralai":
         return MistralAIEmbedProvider(model['name'], model['params'])
     if provider == "cohereai":
@@ -167,6 +170,8 @@ def get_chat_model(model_id):
         return TransformersChatProvider(model['name'], model['params'])
     if provider == "openai":
         return OpenAIChatProvider(model['name'], model['params'])
+    if provider == "gemini":
+        return GeminiChatProvider(model['name'], model['params'])
     if provider == "custom":
         return OpenAIChatProvider(model['name'], model['params'], base_url=model['url'])
     if provider == "ollama":

@@ -43,6 +43,22 @@ class TestChatModelList:
             assert 'name' in model
 
 
+class TestGeminiProviderResolution:
+    def test_returns_gemini_embedding_provider(self):
+        from latentscope.models import get_embedding_model
+        from latentscope.models.providers.gemini import GeminiEmbedProvider
+
+        provider = get_embedding_model("gemini-gemini-embedding-001")
+        assert isinstance(provider, GeminiEmbedProvider)
+
+    def test_returns_gemini_chat_provider(self):
+        from latentscope.models import get_chat_model
+        from latentscope.models.providers.gemini import GeminiChatProvider
+
+        provider = get_chat_model("gemini-gemini-2.5-flash")
+        assert isinstance(provider, GeminiChatProvider)
+
+
 class TestGetEmbeddingModelDict:
     def test_returns_known_model(self):
         from latentscope.models import get_embedding_model_dict, get_embedding_model_list

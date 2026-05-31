@@ -88,6 +88,7 @@ class TestSetApiKey:
     def test_backward_compat_setters(self, tmp_path):
         from latentscope.util.configuration import (
             set_cohere_key,
+            set_gemini_key,
             set_mistral_key,
             set_openai_key,
             set_together_key,
@@ -104,6 +105,17 @@ class TestSetApiKey:
         assert os.environ.get('COHERE_API_KEY') == "cohere-val"
         set_mistral_key("mistral-val", env_file=env_file)
         assert os.environ.get('MISTRAL_API_KEY') == "mistral-val"
+        set_gemini_key("gemini-val", env_file=env_file)
+        assert os.environ.get('GEMINI_API_KEY') == "gemini-val"
+
+    def test_latentscope_init_accepts_gemini_key(self, tmp_path):
+        import latentscope as ls
+
+        env_file = str(tmp_path / ".env")
+        data_dir = str(tmp_path / "data")
+        ls.init(data_dir, env_file=env_file, gemini_key="gemini-init-val")
+        assert os.environ.get("LATENT_SCOPE_DATA") == data_dir
+        assert os.environ.get("GEMINI_API_KEY") == "gemini-init-val"
 
 
 # ---------------------------------------------------------------------------
@@ -117,6 +129,7 @@ def test_get_supported_api_keys():
     assert "OPENAI_API_KEY" in keys
     assert "VOYAGE_API_KEY" in keys
     assert "MISTRAL_API_KEY" in keys
+    assert "GEMINI_API_KEY" in keys
 
 
 # ---------------------------------------------------------------------------

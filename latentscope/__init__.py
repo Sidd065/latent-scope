@@ -4,6 +4,7 @@ from .util import (
     get_data_dir,
     set_api_key,
     set_cohere_key,
+    set_gemini_key,
     set_mistral_key,
     set_openai_key,
     set_together_key,
@@ -63,7 +64,7 @@ def init(data_dir, env_file=".env", **kwargs):
     This is the recommended entry point for programmatic (library) use:
 
         import latentscope as ls
-        ls.init("~/my-data", openai_key="sk-...")
+        ls.init("~/my-data", openai_key="sk-...", gemini_key="...")
     """
     data_dir = update_data_dir(data_dir, env_file=env_file)
     setters = {
@@ -72,6 +73,7 @@ def init(data_dir, env_file=".env", **kwargs):
         'together_key': set_together_key,
         'cohere_key': set_cohere_key,
         'mistral_key': set_mistral_key,
+        'gemini_key': set_gemini_key,
     }
     for key, setter in setters.items():
         if key in kwargs:
@@ -90,6 +92,7 @@ def main():
     parser.add_argument('--together_key', type=str, help='Together API key')
     parser.add_argument('--cohere_key', type=str, help='Cohere API key')
     parser.add_argument('--mistral_key', type=str, help='Mistral API key')
+    parser.add_argument('--gemini_key', type=str, help='Gemini API key')
 
     args = parser.parse_args()
     init(

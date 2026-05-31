@@ -26,6 +26,33 @@
     }
   },
   {
+    "provider": "gemini",
+    "name": "gemini-embedding-001",
+    "id": "gemini-gemini-embedding-001",
+    "params": {
+      "max_tokens": 8192,
+      "task_type": "CLUSTERING",
+      "dimensions": [
+        3072,
+        1536,
+        768
+      ]
+    }
+  },
+  {
+    "provider": "gemini",
+    "name": "gemini-embedding-2",
+    "id": "gemini-gemini-embedding-2",
+    "params": {
+      "max_tokens": 8192,
+      "dimensions": [
+        3072,
+        1536,
+        768
+      ]
+    }
+  },
+  {
     "provider": "mistralai",
     "name": "mistral-embed",
     "id": "mistralai-mistral-embed",

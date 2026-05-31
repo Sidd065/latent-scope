@@ -20,7 +20,7 @@ latentscope/           # Python package
   __version__.py
   models/              # Embedding + chat model providers
     __init__.py        # get_embedding_model(), get_chat_model()
-    providers/         # openai, transformers, cohere, voyage, etc.
+    providers/         # openai, gemini, transformers, cohere, voyage, etc.
     embedding_models.json
     chat_models.json
   scripts/             # Pipeline step implementations

@@ -10,6 +10,7 @@ _SUPPORTED_API_KEYS = [
     "TOGETHER_API_KEY",
     "COHERE_API_KEY",
     "MISTRAL_API_KEY",
+    "GEMINI_API_KEY",
     "HUGGINGFACE_TOKEN",
 ]
 
@@ -134,3 +135,6 @@ def set_cohere_key(cohere_key, env_file=".env"):
 
 def set_mistral_key(mistral_key, env_file=".env"):
     set_api_key("MISTRAL_API_KEY", mistral_key, env_file)
+
+def set_gemini_key(gemini_key, env_file=".env"):
+    set_api_key("GEMINI_API_KEY", gemini_key, env_file)

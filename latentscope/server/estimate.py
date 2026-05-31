@@ -88,7 +88,7 @@ def estimate_embed():
     )
 
     # Time estimate (rough heuristics)
-    if group in ('openai', 'mistralai', 'cohereai', 'voyageai', 'togetherai'):
+    if group in ('openai', 'gemini', 'mistralai', 'cohereai', 'voyageai', 'togetherai'):
         # API-based: ~500-2000 items/sec depending on provider
         items_per_sec = 1000
     elif is_late_interaction:

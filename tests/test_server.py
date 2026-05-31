@@ -76,6 +76,12 @@ class TestSettings:
         # May return 200 or 500 depending on .env presence; we just check it's reachable
         assert response.status_code in (200, 500)
 
+    def test_get_settings_includes_gemini_key(self, client):
+        response = client.get('/api/settings')
+        assert response.status_code == 200
+        data = json.loads(response.data)
+        assert "GEMINI_API_KEY" in data["supported_api_keys"]
+
     def test_settings_not_available_in_read_only(self, readonly_client):
         response = readonly_client.get('/api/settings')
         assert response.status_code == 404
@@ -149,6 +155,7 @@ class TestModels:
         data = json.loads(response.data)
         assert isinstance(data, list)
         assert len(data) > 0
+        assert any(model["id"] == "gemini-gemini-embedding-001" for model in data)
 
     def test_chat_models_returns_list(self, client):
         response = client.get('/api/models/chat_models')
@@ -156,6 +163,7 @@ class TestModels:
         data = json.loads(response.data)
         assert isinstance(data, list)
         assert len(data) > 0
+        assert any(model["id"] == "gemini-gemini-2.5-flash" for model in data)
 
     def test_recent_embedding_models_no_history(self, client):
         response = client.get('/api/models/embedding_models/recent')

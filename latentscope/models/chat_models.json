@@ -9,6 +9,38 @@
     }
   },
   {
+    "provider": "gemini",
+    "name": "gemini-3.5-flash",
+    "id": "gemini-gemini-3.5-flash",
+    "params": {
+      "max_tokens": 1048576
+    }
+  },
+  {
+    "provider": "gemini",
+    "name": "gemini-2.5-flash",
+    "id": "gemini-gemini-2.5-flash",
+    "params": {
+      "max_tokens": 1048576
+    }
+  },
+  {
+    "provider": "gemini",
+    "name": "gemini-2.5-flash-lite",
+    "id": "gemini-gemini-2.5-flash-lite",
+    "params": {
+      "max_tokens": 1048576
+    }
+  },
+  {
+    "provider": "gemini",
+    "name": "gemini-2.5-pro",
+    "id": "gemini-gemini-2.5-pro",
+    "params": {
+      "max_tokens": 1048576
+    }
+  },
+  {
     "provider": "openai",
     "name": "gpt-5.1",
     "id": "openai-gpt-5.1",
