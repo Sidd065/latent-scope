@@ -4,9 +4,10 @@ import math
 import os
 import sys
 from importlib.resources import files
+from pathlib import Path
 
 from dotenv import dotenv_values, set_key
-from flask import Flask, jsonify, request, send_from_directory
+from flask import Flask, abort, jsonify, request, send_from_directory
 from flask_cors import CORS
 
 from latentscope.__version__ import __version__
@@ -18,6 +19,25 @@ def _parse_bool_env(value):
     if value is None:
         return False
     return value.lower() in ('true', '1', 't', 'y', 'yes')
+
+
+def _web_dist_dir():
+    configured = os.getenv("LATENT_SCOPE_WEB_DIST")
+    candidates = []
+    if configured:
+        candidates.append(Path(configured))
+
+    repo_root = Path(__file__).resolve().parents[2]
+    candidates.append(repo_root / "web" / "dist" / "production")
+    candidates.append(repo_root / "web" / "dist")
+
+    package_dist = files('latentscope').joinpath("web/dist")
+    candidates.append(Path(str(package_dist)))
+
+    for candidate in candidates:
+        if (candidate / "index.html").exists():
+            return candidate
+    return None
 
 
 def create_app(data_dir=None, read_only=None):
@@ -282,11 +302,14 @@ def create_app(data_dir=None, read_only=None):
     @app.route('/', defaults={'path': ''})
     @app.route('/<path:path>')
     def catch_all(path):
-        if path.endswith('.js') or path.endswith('.css'):
-            pth = files('latentscope').joinpath(f"web/dist/{path}")
-            return send_from_directory(pth.parent, pth.name)
-        pth = files('latentscope').joinpath("web/dist/index.html")
-        return send_from_directory(pth.parent, pth.name)
+        dist_dir = _web_dist_dir()
+        if dist_dir is None:
+            abort(404)
+
+        requested = dist_dir / path
+        if path and requested.is_file():
+            return send_from_directory(requested.parent, requested.name)
+        return send_from_directory(dist_dir, "index.html")
 
     return app
 

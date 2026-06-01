@@ -36,7 +36,6 @@ dependencies = [
     "hdbscan>=0.8,<1",
     "evoc>=0.3,<1",
     # Modeling utilities
-    "outlines>=0.1,<2",
     "datamapplot>=0.5,<1",
     "matplotlib>=3.8,<4",
     # Dataset sharing

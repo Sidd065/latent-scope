@@ -1,8 +1,10 @@
 import os
 import time
-from .base import EmbedModelProvider, ChatModelProvider
 
 from latentscope.util import get_key
+
+from .base import ChatModelProvider, EmbedModelProvider
+
 
 class OpenAIEmbedProvider(EmbedModelProvider):
     def __init__(self, name, params, base_url=None):
@@ -57,22 +59,17 @@ class OpenAIEmbedProvider(EmbedModelProvider):
 
 class OpenAIChatProvider(ChatModelProvider):
     def load_model(self):
-        from openai import OpenAI, AsyncOpenAI
         import tiktoken
-        import outlines
-        from outlines.models.openai import OpenAIConfig
+        from openai import OpenAI
+
         if self.base_url is None:
-            self.client = AsyncOpenAI(api_key=get_key("OPENAI_API_KEY"))
+            self.client = OpenAI(api_key=get_key("OPENAI_API_KEY"))
             self.encoder = tiktoken.encoding_for_model(self.name)
         else:
-            self.client = AsyncOpenAI(api_key=get_key("OPENAI_API_KEY"), base_url=self.base_url)
+            self.client = OpenAI(api_key=get_key("OPENAI_API_KEY"), base_url=self.base_url)
             # even if this is some other model, we wont be able to figure out the tokenizer from custom API
             # so we just use gpt-4o as a fallback, it should be roughly correct for token counts
-            self.encoder = tiktoken.encoding_for_model("gpt-4o") 
-        config = OpenAIConfig(self.name)
-        self.model = outlines.models.openai(self.client, config)
-        self.generator = outlines.generate.text(self.model)
-
+            self.encoder = tiktoken.encoding_for_model("gpt-4o")
 
     def chat(self, messages):
         response = self.client.chat.completions.create(
@@ -82,6 +79,10 @@ class OpenAIChatProvider(ChatModelProvider):
         return response.choices[0].message.content
 
     def summarize(self, items, context=""):
-        from .prompts import summarize
+        from .prompts import summarize, summarize_system_prompt
+
         prompt = summarize(items, context)
-        return self.generator(prompt)
+        return self.chat([
+            {"role": "system", "content": summarize_system_prompt},
+            {"role": "user", "content": prompt},
+        ])

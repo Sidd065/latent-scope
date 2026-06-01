@@ -50,7 +50,6 @@
     "jsdom": "29.0.1",
     "prettier": "3.3.3",
     "vite": "5.0.8",
-    "vite-plugin-top-level-await": "1.4.1",
     "vite-plugin-wasm": "3.3.0",
     "vitest": "4.1.2"
   }

@@ -1,6 +1,11 @@
 export const apiUrl = import.meta.env.VITE_API_URL;
 
-const { asyncBufferFromUrl, parquetRead } = await import('hyparquet');
+let hyparquetPromise;
+
+const loadHyparquet = () => {
+  hyparquetPromise ??= import('hyparquet');
+  return hyparquetPromise;
+};
 
 export const apiService = {
   fetchDataset: async (datasetId) => {
@@ -257,6 +262,7 @@ export const apiService = {
     }).then((response) => response.json());
   },
   getFeatures: async (url) => {
+    const { asyncBufferFromUrl, parquetRead } = await loadHyparquet();
     const buffer = await asyncBufferFromUrl(url);
     return new Promise((resolve) => {
       parquetRead({
